@@ -5,6 +5,8 @@ const cors = require('cors')
 const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
 const winston = require('winston')
+const { v4: uuid } = require('uuid')
+const bookmarkRouter = require('./bookmarks/bookmarks-router')
 
 // logger WINSTON
 const logger = winston.createLogger({
@@ -27,7 +29,8 @@ const bookmarks = [{
   title: "Google",
   url: "www.google.com",
   description: "Popular search engine",
-  rating: 3
+  rating: 3,
+  id: 1
 }]
 
 
@@ -57,6 +60,84 @@ app.use(function validateBearerToken(req, res, next) {
 
 app.get('/', (req, res) => {
   res.send('Hello, world!')
+})
+
+app.use(bookmarkRouter)
+
+// GET endpoint
+app.get('/bookmarks', (req, res) => {
+  res.json(bookmarks)
+})
+
+// Get individual
+app.get('/bookmarks/:id', (req, res) => {
+  const { id } = req.params
+  const bookmark = bookmarks.find(b => b.id == id)
+
+  if (!bookmark) {
+    logger.error(`Bookmark with id ${id} not found`)
+    return res
+      .status(404)
+      .send('Bookmark not found')
+  }
+  res.json(bookmark)
+})
+
+// POST endpoint
+app.post('/bookmarks', (req, res) => {
+  const { title, url, description = '', rating = 0 } = req.body
+
+  if (!title) {
+    logger.error('Title is required')
+    return res
+      .status(400)
+      .send('Invalid data')
+  }
+
+  if (!url) {
+    logger.error('url is required')
+    return res
+      .status(400)
+      .send('Invalid data')
+  }
+
+  const id = uuid()
+
+  const bookmark = {
+    title,
+    url,
+    description,
+    rating,
+    id
+  }
+
+  bookmarks.push(bookmark)
+
+  logger.info(`Bookmark with the id ${id} created`)
+  res
+    .status(201)
+    .location(`http://localhost:8000/bookmarks/${id}`)
+    .json(bookmark)
+})
+
+// DELETE endpoint
+app.delete('/bookmarks/:id', (req, res) => {
+  const { id } = req.params
+  const bookmarkIndex = bookmarks.findIndex(b => b.id == id)
+
+  if(bookmarkIndex === -1) {
+    logger.error(`Bookmark with the id ${id} not found`)
+    return res
+      .status(404)
+      .send('Bookmark not found')
+  }
+
+  bookmarks.splice(bookmarkIndex, 1)
+
+  logger.info(`Bookmark with id ${id} deleted`)
+  res
+    .status(204)
+    .end()
 })
 
 app.use(function errorHandler(error, req, res, next) {
