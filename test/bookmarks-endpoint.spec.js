@@ -101,6 +101,27 @@ describe('Bookmarks Endpoints', () => {
           .expect(200, expectedBookmark)
       })
     })
+
+    context(`Given an xss attack bookmark`, () => {
+      const { maliciousBookmark, expectedBookmark } = makeMaliciousBookmark()
+
+      beforeEach(`insert a malicious bookmark`, () => {
+        return db
+          .into('bookmarks')
+          .insert([ maliciousBookmark ])
+      })
+
+      it(`removes xss attack content`, () => {
+        return supertest(app)
+          .get(`/bookmarks/${maliciousBookmark.id}`)
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+          .expect(200)
+          .expect(res => {
+            expect(res.body.title).to.eql(expectedBookmark.title)
+            expect(res.body.description).to.eql(expectedBookmark.description)
+          })
+      })
+    })
   })
 
   // POST /bookmark
