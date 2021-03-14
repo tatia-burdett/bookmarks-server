@@ -2,6 +2,7 @@ const knex = require('knex')
 const app = require('../src/app')
 const supertest = require('supertest')
 const { makeBookmarksArray, makeMaliciousBookmark } = require('./bookmarks-fixture')
+const { expect } = require('chai')
 
 describe('Bookmarks Endpoints', () => {
   let db
@@ -77,6 +78,59 @@ describe('Bookmarks Endpoints', () => {
           .get(`/bookmarks/${bookmarkId}`)
           .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
           .expect(200, expectedBookmark)
+      })
+    })
+  })
+
+  // POST /bookmark
+  describe('POST /bookmarks', () => {
+    it('creates a bookmark, responding with 201 and the new bookmark', () => {
+      const newBookmark = {
+        title: 'Test New Bookmark',
+        url: 'www.test-url.example',
+        description: 'Test new description...',
+        rating: '5'
+      }
+      return supertest(app)
+        .post('/bookmarks')
+        .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+        .send(newBookmark)
+        .expect(201)
+        .expect(res => {
+          expect(res.body.title).to.eql(newBookmark.title),
+          expect(res.body.url).to.eql(newBookmark.url),
+          expect(res.body.description).to.eql(newBookmark.description),
+          expect(res.body.rating).to.eql(newBookmark.rating),
+          expect(res.body).to.have.property('id')
+          expect(res.headers.location).to.eql(`/bookmarks/${res.body.id}`)
+        })
+        .then(res => 
+          supertest(app)
+            .get(`/bookmarks/${res.body.id}`)
+            .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+            .expect(res.body)
+        )
+    })
+
+    const requiredFields = ['title', 'url', 'rating']
+
+    requiredFields.forEach(field => {
+      const newBookmark = {
+        title: 'Test New Bookmark',
+        url: 'www.test-url.example',
+        rating: '5'
+      }
+
+      it(`responds with 400 and an error when the ${field} is empty`, () => {
+        delete newBookmark[field]
+
+        return supertest(app)
+          .post('/bookmarks')
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+          .send(newBookmark)
+          .expect(400, {
+            error: { message: `Missing '${field}' in request body` }
+          })
       })
     })
   })
