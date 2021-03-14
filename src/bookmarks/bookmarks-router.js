@@ -7,17 +7,16 @@ const bookmarkRouter = express.Router()
 const bodyParser = express.json()
 const BookmarksService = require('./bookmarks-service')
 
-bookmarkRouter
+bookmarkRouter // /bookmarks route
   .route('/bookmarks')
-  // Working here on GET /bookmarks
-  .get((req, res, next) => {
+  .get((req, res, next) => { // GET
     BookmarksService.getBookmarks(req.app.get('db'))
       .then(bookmarks => {
         res.json(bookmarks)
       })
       .catch(next)
   })
-  .post(bodyParser, (req, res) => {
+  .post(bodyParser, (req, res) => { // POST
     const { title, url, description = '', rating = 0 } = req.body
 
     if (!title) {
@@ -53,10 +52,9 @@ bookmarkRouter
       .json(bookmark)
   })
 
-bookmarkRouter
+bookmarkRouter // /bookmarks/:id route
   .route('/bookmarks/:id')
-  // Working here on GET /bookmarks/:id
-  .get((req, res, next) => {
+  .get((req, res, next) => { // GET
     const { id } = req.params
     BookmarksService.getById(req.app.get('db'), id)
       .then(bookmark => {
@@ -70,7 +68,7 @@ bookmarkRouter
       })
       .catch(next)
   })
-  .delete((req, res) => {
+  .delete((req, res) => { // DELETE
     const { id } = req.params
     const bookmarkIndex = bookmarks.findIndex(b => b.id == id)
   

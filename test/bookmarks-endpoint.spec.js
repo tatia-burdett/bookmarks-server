@@ -21,8 +21,8 @@ describe('Bookmarks Endpoints', () => {
   afterEach('cleanup', () => db('bookmarks').truncate())
 
   // GET /bookmarks endpoint
-  describe('GET /bookmarks', () => {
-    context(`Given no bookmarks`, () => {
+  describe('GET /bookmarks', () => { 
+    context(`Given no bookmarks`, () => { // GIVE NO BOOKMARKS
       it(`responds with 200 and an empty list`, () => {
         return supertest(app)
           .get('/bookmarks')
@@ -31,7 +31,7 @@ describe('Bookmarks Endpoints', () => {
       })
     })
 
-    context('Given there are bookmarks in the database', () => {
+    context('Given there are bookmarks in the database', () => { // GIVEN BOOMARKS
       const testBookmarks = makeBookmarksArray()
 
       beforeEach('insert bookmarks', () => {
@@ -40,7 +40,7 @@ describe('Bookmarks Endpoints', () => {
           .insert(testBookmarks)
       })
 
-      it('gets the bookmarks', () => {
+      it('responds 200 and returns all bookmarks', () => {
         return supertest(app)
           .get('/bookmarks')
           .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
@@ -51,13 +51,32 @@ describe('Bookmarks Endpoints', () => {
 
   // GET /bookmarks/:id endpoint
   describe('GET /bookmarks/:id', () => {
-    context('given no bookmarks', () => {
+    context('given no bookmarks', () => { // GIVEN NO BOOMARKS
       it('responds with 404', () => {
         const articleId = 123456
         return supertest(app)
           .get(`/bookmarks/${articleId}`)
           .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
           .expect(404, { error: { message: `Bookmark not found` }})
+      })
+    })
+
+    context('given there are bookmarks', () => { // GIVEN BOOKMARKS
+      const testBookmark = makeBookmarksArray()
+
+      beforeEach('insert articles', () => {
+        return db
+          .into('bookmarks')
+          .insert(testBookmark)
+      })
+
+      it('responds with 200 and the specified bookmark', () => {
+        const bookmarkId = 2
+        const expectedBookmark = testBookmark[bookmarkId - 1]
+        return supertest(app)
+          .get(`/bookmarks/${bookmarkId}`)
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+          .expect(200, expectedBookmark)
       })
     })
   })
