@@ -24,7 +24,7 @@ bookmarkRouter // /bookmarks route
       })
       .catch(next)
   })
-  .post(bodyParser, (req, res) => { // POST
+  .post(bodyParser, (req, res, next) => { // POST
     const { title, url, description = '', rating } = req.body
     const newBookmark = { title, url, description, rating }
 
