@@ -1,7 +1,7 @@
 const knex = require('knex')
 const app = require('../src/app')
 const supertest = require('supertest')
-const { makeBookmarksArray } = require('./bookmarks-fixture')
+const { makeBookmarksArray, makeMaliciousBookmark } = require('./bookmarks-fixture')
 
 describe('Bookmarks Endpoints', () => {
   let db
@@ -20,6 +20,7 @@ describe('Bookmarks Endpoints', () => {
 
   afterEach('cleanup', () => db('bookmarks').truncate())
 
+  // GET /bookmarks endpoint
   describe('GET /bookmarks', () => {
     context(`Given no bookmarks`, () => {
       it(`responds with 200 and an empty list`, () => {
@@ -44,6 +45,19 @@ describe('Bookmarks Endpoints', () => {
           .get('/bookmarks')
           .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
           .expect(200, testBookmarks)
+      })
+    })
+  })
+
+  // GET /bookmarks/:id endpoint
+  describe('GET /bookmarks/:id', () => {
+    context('given no bookmarks', () => {
+      it('responds with 404', () => {
+        const articleId = 123456
+        return supertest(app)
+          .get(`/bookmarks/${articleId}`)
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+          .expect(404, { error: { message: `Bookmark not found` }})
       })
     })
   })
