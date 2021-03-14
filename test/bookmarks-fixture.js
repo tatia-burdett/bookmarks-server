@@ -32,14 +32,14 @@ function makeMaliciousBookmark() {
     title: 'Malicious <script>alert("xss");</script>',
     description: 'Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">.',
   }
-  const expectedArticle = {
+  const expectedBookmark = {
     ...maliciousBookmark,
     title: 'Malicious &lt;script&gt;alert(\"xss\");&lt;/script&gt;',
-    description: 'Bad image <img src="https://url.to.file.which/does-not.exist">'
+    description: 'Bad image <img src="https://url.to.file.which/does-not.exist">.'
   }
   return {
     maliciousBookmark,
-    expectedArticle
+    expectedBookmark
   }
 }
 
