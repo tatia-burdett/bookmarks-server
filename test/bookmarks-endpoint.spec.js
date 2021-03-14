@@ -134,4 +134,17 @@ describe('Bookmarks Endpoints', () => {
       })
     })
   })
+
+  // DELETE /bookmark/:id
+  describe(`DELETE /bookmarks/:id`, () => {
+    context('Given no bookmark', () => {
+      it('responds with 404', () => {
+        const bookmarkId = 123456
+        return supertest(app)
+          .delete(`/bookmarks/${bookmarkId}`)
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+          .expect(404, { error: { message: `Bookmark not found` }})
+      })
+    })
+  })
 })
