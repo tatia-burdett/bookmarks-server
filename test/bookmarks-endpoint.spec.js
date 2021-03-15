@@ -189,4 +189,50 @@ describe('Bookmarks Endpoints', () => {
       })
     })
   })
+
+  // PATCH /bookmark/:id
+  describe(`PATCH /bookmarks/:id`, () => {
+    context('Given no bookmarks', () => {
+      it(`responds with 404`, () => {
+        const bookmarkId = 123456
+        return supertest(app)
+          .patch(`/bookmarks/${bookmarkId}`)
+          .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+          .expect(404, { error: { message: `Bookmark not found` } })
+      })
+    })
+
+    context(`Given there are bookmarks in the database`, () => {
+      const testBookmark = makeBookmarksArray()
+
+      beforeEach(`insert bookmark`, () => {
+        return db
+          .into(`bookmarks`)
+          .insert(testBookmark)
+      })
+
+      it(`responds with 204 and updates the bookmark`, () => {
+        const idToUpdate = 2
+        const updateBookmark = {
+          title: 'Test Updated Title',
+          description: 'Test updated description',
+          rating: '4'
+        }
+        const expectedBookmark = {
+          ...testBookmark[idToUpdate - 1],
+          ...updateBookmark
+        }
+        return supertest(app)
+          .patch(`/bookmarks/${idToUpdate}`)
+          .set(`Authorization`, `Bearer ${process.env.API_TOKEN}`)
+          .send(updateBookmark)
+          .expect(204)
+          .then(res => {
+            supertest(app)
+              .get(`/bookmarks/${idToUpdate}`)
+              .expect(expectedBookmark)
+          })
+      })
+    })
+  })
 })

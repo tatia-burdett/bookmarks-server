@@ -76,5 +76,19 @@ bookmarkRouter // /bookmarks/:id route
       })
       .catch(next)
   })
+  .patch(bodyParser, (req, res, next) => {
+    const { title, description, rating } = req.body
+    const bookmarkToUpdate = { title, description, rating }
+
+    BookmarksService.updateBookmark(
+      req.app.get('db'),
+      req.params.id,
+      bookmarkToUpdate
+    )
+      .then(numRowsAffected => {
+        res.status(204).end()
+      })
+      .catch(next)
+  })
 
 module.exports = bookmarkRouter
