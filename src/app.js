@@ -5,8 +5,8 @@ const cors = require('cors')
 const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
 const bookmarkRouter = require('./bookmarks/bookmarks-router')
-const logger = require('./logger')
 const validateBearerToken = require('./validate-bearer-token')
+const errorHandler = require('./error-handler')
 
 const app = express()
 
@@ -27,15 +27,6 @@ app.get('/', (req, res) => {
 
 app.use(bookmarkRouter)
 
-app.use(function errorHandler(error, req, res, next) {
-  let response
-  if (NODE_ENV === 'production') {
-    response = { error: { message: 'server error' } }
-  } else {
-    console.error(error)
-    response = { message: error.message, error }
-  }
-  res.status(500).json(response)
-})
+app.use(errorHandler)
 
 module.exports = app
