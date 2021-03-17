@@ -21,11 +21,11 @@ app.use(cors())
 // Authentictaion Middleware
 app.use(validateBearerToken)
 
+app.use('/api/bookmarks', bookmarkRouter)
+
 app.get('/', (req, res) => {
   res.send('Hello, world!')
 })
-
-app.use(bookmarkRouter)
 
 app.use(errorHandler)
 

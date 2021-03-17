@@ -1,5 +1,5 @@
 const BookmarksService = {
-  getBookmarks(knex) {
+  getAllBookmarks(knex) {
     return knex.select('*').from('bookmarks')
   },
   getById(knex, id) {
@@ -23,7 +23,7 @@ const BookmarksService = {
     return knex('bookmarks')
       .where({ id })
       .update(newBookmarkFields)
-  }
+  },
 }
 
 module.exports = BookmarksService

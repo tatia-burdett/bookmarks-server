@@ -1,27 +1,30 @@
 const express = require('express')
 const xss = require('xss')
-
-const bookmarkRouter = express.Router()
-const bodyParser = express.json()
+const logger = require('../logger')
 const BookmarksService = require('./bookmarks-service')
+
+const bookmarksRouter = express.Router()
+const bodyParser = express.json()
 
 const serializeBookmarks = bookmark => ({
   id: bookmark.id,
   title: xss(bookmark.title),
   url: bookmark.url,
   description: xss(bookmark.description),
-  rating: bookmark.rating
+  rating: Number(bookmark.rating)
 })
 
-bookmarkRouter // /bookmarks route
-  .route('/bookmarks')
+bookmarksRouter // /bookmarks route
+  .route('/')
+
   .get((req, res, next) => { // GET
-    BookmarksService.getBookmarks(req.app.get('db'))
+    BookmarksService.getAllBookmarks(req.app.get('db'))
       .then(bookmarks => {
         res.json(bookmarks.map(serializeBookmarks))
       })
       .catch(next)
   })
+
   .post(bodyParser, (req, res, next) => { // POST
     const { title, url, description = '', rating } = req.body
     const newBookmark = { title, url, description, rating }
@@ -37,23 +40,27 @@ bookmarkRouter // /bookmarks route
         newBookmark
       )
         .then(bookmark => {
+          logger.info(`Bookmark with id ${bookmark.id} created`)
           res
             .status(201)
-            .location(`/bookmarks/${bookmark.id}`)
+            .location(`/api/bookmarks/${bookmark.id}`)
             .json(serializeBookmarks(bookmark))
         })
         .catch(next)
   })
 
-bookmarkRouter // /bookmarks/:id route
-  .route('/bookmarks/:id')
+bookmarksRouter // /:bookmark_id route
+  .route('/:bookmark_id')
+
   .all((req, res, next) => {
+    const { bookmark_id } = req.params
     BookmarksService.getById(
       req.app.get('db'),
-      req.params.id
+      bookmark_id
     )
       .then(bookmark => {
         if (!bookmark) {
+          logger.error(`Bookmark with id ${bookmark_id} not found`)
           return res.status(404).json({
             error: { message: `Bookmark not found` }
           })
@@ -63,34 +70,41 @@ bookmarkRouter // /bookmarks/:id route
       })
       .catch(next)
   })
+
   .get((req, res, next) => {
     res.json(serializeBookmarks(res.bookmark))
   })
+
   .delete((req, res, next) => {
+    const { bookmark_id } = req.params
     BookmarksService.deleteBookmark(
       req.app.get('db'),
-      req.params.id
+      bookmark_id
     )
       .then(numRowsAffected => {
-        res.status(203).end
+        logger.info(`Bookmark with id ${bookmark_id} deleted`)
+        res.status(204).end()
       })
       .catch(next)
   })
+  
   .patch(bodyParser, (req, res, next) => {
-    const { title, description, rating } = req.body
-    const bookmarkToUpdate = { title, description, rating }
+    const { title, url, description, rating } = req.body
+    const bookmarkToUpdate = { title, url, description, rating }
 
     const numberOfValues = Object.values(bookmarkToUpdate).filter(Boolean).length
-    if (numberOfValues === 0)
+    if (numberOfValues === 0) {
+      logger.error(`Invalid update without required fields`)
       return res.status(400).json({
         error: {
-          message: `Request body must contain either 'title', 'description', or 'rating'`
+          message: `Request body must contain either 'title', 'url', 'description' or 'rating'`
         }
       })
+    }
 
     BookmarksService.updateBookmark(
       req.app.get('db'),
-      req.params.id,
+      req.params.bookmark_id,
       bookmarkToUpdate
     )
       .then(numRowsAffected => {
@@ -99,4 +113,4 @@ bookmarkRouter // /bookmarks/:id route
       .catch(next)
   })
 
-module.exports = bookmarkRouter
+module.exports = bookmarksRouter
